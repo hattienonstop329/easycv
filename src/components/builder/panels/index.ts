@@ -1,6 +1,5 @@
 export { TemplatesPanel } from './TemplatesPanel';
 export { DesignPanel } from './DesignPanel';
-export { TypographyPanel } from './TypographyPanel';
 export { MatchJDPanel } from './MatchJDPanel';
 export { PolishPanel } from './PolishPanel';
 export { DiffPanel } from './DiffPanel';

@@ -3,7 +3,6 @@
 export type PanelId =
   | 'templates'
   | 'design'
-  | 'typography'
   | 'sections'
   | 'profile'
   | 'experience'
@@ -30,7 +29,6 @@ interface PanelDef {
 export const RESUME_PANELS: ReadonlyArray<PanelDef> = [
   { id: 'templates', label: 'templates', icon: '▤' },
   { id: 'design', label: 'design', icon: '◎' },
-  { id: 'typography', label: 'typography', icon: 'Aa' },
   { id: 'stickers', label: 'stickers', icon: '✦' },
   { id: 'sections', label: 'sections', icon: '☰' },
   { id: 'profile', label: 'profile', icon: '◐' },

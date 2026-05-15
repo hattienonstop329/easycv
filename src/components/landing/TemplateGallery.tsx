@@ -243,7 +243,6 @@ function LetterCard({
         className={`absolute -top-4 left-1/2 -translate-x-1/2 w-28 h-6 ${tape} z-20 rotate-[-3deg]`}
         style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
       />
-      {/* "letter" corner ribbon so users can tell it apart from the resume cards */}
       <span className="absolute -top-2 -left-2 z-30 bg-matcha-deep text-paper text-[9px] uppercase tracking-widest px-2 py-1 rounded -rotate-12 shadow-md">
         letter
       </span>

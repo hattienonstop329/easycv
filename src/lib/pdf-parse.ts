@@ -11,8 +11,7 @@ import {
   SectionType,
   CustomSectionContent,
 } from './types';
-
-const id = () => Math.random().toString(36).slice(2, 10);
+import { uid } from './uid';
 
 const EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/;
 const PHONE_RE = /(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/;
@@ -245,7 +244,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
         const split = headerNoDates.split(/\s+(?:at|@|·|\||,)\s+/);
         const [role, company] = split;
         current = {
-          id: id(),
+          id: uid(),
           role: (role ?? headerNoDates).trim(),
           company: (company ?? '').trim(),
           location: '',
@@ -258,7 +257,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
       }
       if (!current) {
         // Try treating the very first line as a header without dates.
-        current = { id: id(), role: raw, company: '', location: '', start: '', end: '', current: false, bullets: [] };
+        current = { id: uid(), role: raw, company: '', location: '', start: '', end: '', current: false, bullets: [] };
         continue;
       }
       if (isBulletLine(raw)) {
@@ -301,7 +300,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
         if (current) education.push(current);
         const headerNoDates = raw.replace(DATE_RE, '').replace(SINGLE_DATE_RE, '').trim();
         current = {
-          id: id(),
+          id: uid(),
           school: headerNoDates,
           degree: '',
           field: '',
@@ -322,7 +321,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
         }
       } else {
         // Treat first line as school
-        current = { id: id(), school: raw, degree: '', field: '', start: '', end: '', notes: '' };
+        current = { id: uid(), school: raw, degree: '', field: '', start: '', end: '', notes: '' };
       }
     }
     if (current) education.push(current);
@@ -339,19 +338,19 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
       if (colonMatch) {
         const items = colonMatch[2].split(/[,;|·]/).map((s) => s.trim()).filter(Boolean);
         skills.push({
-          id: id(),
+          id: uid(),
           category: colonMatch[1].trim(),
           items: items.map((name) => ({ name })),
         });
       } else {
-        // Loose line — treat each comma-separated chunk as a skill in a default group.
+        // No category header — bucket comma-separated chunks into a default group.
         const items = raw.split(/[,;|·]/).map((s) => s.trim()).filter(Boolean);
         if (items.length > 0) {
           const group = skills.find((g) => g.category === 'Skills');
           if (group) {
             for (const i of items) group.items.push({ name: i });
           } else {
-            skills.push({ id: id(), category: 'Skills', items: items.map((name) => ({ name })) });
+            skills.push({ id: uid(), category: 'Skills', items: items.map((name) => ({ name })) });
           }
         }
       }
@@ -371,7 +370,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
         if (current) projects.push(current);
         const urlInside = raw.match(URL_RE);
         current = {
-          id: id(),
+          id: uid(),
           name: urlInside ? raw.replace(URL_RE, '').trim() : raw,
           link: urlInside ? urlInside[0] : '',
           description: '',
@@ -397,7 +396,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
     const split = noDate.split(/\s*[—–|·]\s*|\s+\((?=[A-Z])|\)\s*$|,\s+(?=[A-Z][a-z])/);
     const name = (split[0] ?? noDate).trim();
     const issuer = (split[1] ?? '').trim();
-    if (name) certifications.push({ id: id(), name, issuer, date });
+    if (name) certifications.push({ id: uid(), name, issuer, date });
   }
 
   // --- awards --------------------------------------------------------------
@@ -419,7 +418,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
           : stripped;
         const split = noDate.split(/\s*[—–|·]\s*|,\s+(?=[A-Z][a-z])/);
         cur = {
-          id: id(),
+          id: uid(),
           name: (split[0] ?? noDate).trim(),
           issuer: (split[1] ?? '').trim(),
           date,
@@ -428,7 +427,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
       } else if (cur) {
         cur.description = cur.description ? `${cur.description} ${stripped}` : stripped;
       } else {
-        cur = { id: id(), name: stripped, issuer: '', date: '', description: '' };
+        cur = { id: uid(), name: stripped, issuer: '', date: '', description: '' };
       }
     }
     if (cur) awards.push(cur);
@@ -447,14 +446,14 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
         /^([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)\s*(?:[—–\-:·]|\()\s*([A-Za-z][a-zA-Z\s]+)\)?$/,
       );
       if (m) {
-        languages.push({ id: id(), name: m[1].trim(), level: m[2].trim() });
+        languages.push({ id: uid(), name: m[1].trim(), level: m[2].trim() });
       } else {
         // Two-word fallback: "English Native"
         const m2 = ch.match(/^([A-Z][a-zA-Z]+)\s+([A-Za-z][a-zA-Z\s]+)$/);
         if (m2) {
-          languages.push({ id: id(), name: m2[1].trim(), level: m2[2].trim() });
+          languages.push({ id: uid(), name: m2[1].trim(), level: m2[2].trim() });
         } else if (/^[A-Z][a-zA-Z]+$/.test(ch)) {
-          languages.push({ id: id(), name: ch, level: '' });
+          languages.push({ id: uid(), name: ch, level: '' });
         }
       }
     }
@@ -467,7 +466,7 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
     if (sec.kind !== 'custom') continue;
     const body = lines.slice(sec.start, sec.end).filter(Boolean).join('\n').trim();
     if (!body) continue;
-    const sid = `s-custom-${id()}`;
+    const sid = `s-custom-${uid()}`;
     customSections[sid] = { id: sid, body };
     customSectionEntries.push({ id: sid, title: sec.title });
   }
@@ -563,12 +562,9 @@ export function parseResumeText(rawLines: string[]): ParsedReport {
   };
 }
 
-/**
- * Merge a parsed partial resume into a base resume — preserving customization,
- * template, letter, etc., while replacing every data field we managed to
- * extract. If the parser produced a fresh `sections` ordering, use it so the
- * imported data is actually visible.
- */
+// Preserves base customization/template/letter; replaces any data field we
+// extracted. Honors the parser's `sections` order so imported items aren't
+// stranded as hidden.
 export function mergeParsedResume(
   base: ResumeData,
   partial: ParsedReport['data'],

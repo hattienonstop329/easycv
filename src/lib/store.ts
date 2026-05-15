@@ -23,8 +23,7 @@ import {
 } from './types';
 import { COLOR_THEMES, getTemplateMeta } from './design-tokens';
 import { pushSnapshot } from './snapshots';
-
-const id = () => Math.random().toString(36).slice(2, 10);
+import { uid as id } from './uid';
 
 export interface VersionMeta {
   id: string;

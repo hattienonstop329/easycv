@@ -1,14 +1,7 @@
 'use client';
 
-/**
- * Extract plain text from a PDF file using pdfjs-dist. Runs entirely in the
- * browser — the PDF bytes never leave the page. The pdf.worker.min.mjs file
- * itself is loaded once from a CDN to keep our bundle lean (it's >1MB).
- *
- * Handles 2-column resume layouts by detecting a vertical text gap across the
- * page and emitting the left column's lines first, then the right column's,
- * so the heuristic parser sees a coherent reading order.
- */
+// PDF bytes stay in the browser. The pdf.worker.min.mjs (>1MB) is loaded
+// once from a CDN so we don't bundle it.
 export async function extractTextFromPdf(file: File): Promise<{
   text: string;
   lines: string[];
@@ -53,11 +46,9 @@ export async function extractTextFromPdf(file: File): Promise<{
       const left = items.filter((it) => it.x + it.width / 2 < columnBoundary);
       const right = items.filter((it) => it.x + it.width / 2 >= columnBoundary);
       lines.push(...rowsToLines(left));
-      // Blank line so the parser doesn't fuse left column's last line with right column's first.
       lines.push('');
       lines.push(...rowsToLines(right));
     }
-    // Page break marker — the parser uses this for heuristic boundaries.
     lines.push('');
   }
 
@@ -82,19 +73,14 @@ function rowsToLines(items: { x: number; y: number; str: string }[]): string[] {
   return out;
 }
 
-/**
- * Look for a vertical gap that runs through most of the page — if found,
- * return the X-coordinate of the gap (use it to bucket items into columns).
- * Returns null when the page looks single-column.
- */
+// Returns the X to split items into left/right columns, or null when the page
+// looks single-column. Picks the probe with the fewest straddling items and
+// non-trivial content on both sides.
 function detectColumnBoundary(
   items: { x: number; y: number; width: number }[],
   pageWidth: number,
 ): number | null {
   if (items.length < 20 || pageWidth < 100) return null;
-  // Probe a few candidate split X values across the middle 50% of the page.
-  // For each, count how many items straddle it. The split with the fewest
-  // straddlers AND meaningful items on both sides is our boundary.
   const probes: number[] = [];
   for (let pct = 0.3; pct <= 0.7; pct += 0.02) {
     probes.push(pageWidth * pct);

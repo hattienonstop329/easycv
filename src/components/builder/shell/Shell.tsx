@@ -9,7 +9,6 @@ import {
   CertificationsEditor,
   DesignPanel,
   DiffPanel,
-  TypographyPanel,
   EducationPanel,
   ExperiencePanel,
   LanguagesEditor,
@@ -117,7 +116,6 @@ export function Shell({ initialTemplate }: { initialTemplate?: TemplateId }) {
           <div className="flex-1 overflow-y-auto thin-scroll p-4 md:p-6 pb-24 lg:pb-6">
             {panel === 'templates' && <TemplatesPanel mode={mode} />}
             {panel === 'design' && <DesignPanel />}
-            {panel === 'typography' && <TypographyPanel />}
             {panel === 'sections' && <SectionsPanel />}
             {panel === 'profile' && <ProfilePanel />}
             {panel === 'experience' && <ExperiencePanel />}

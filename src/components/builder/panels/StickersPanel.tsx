@@ -2,6 +2,7 @@
 
 import { useResume } from '@/lib/store';
 import { Sticker, StickerKind } from '@/lib/types';
+import { uid } from '@/lib/uid';
 import {
   Arrow,
   CoffeeCup,
@@ -28,8 +29,6 @@ const KINDS: { id: StickerKind; name: string; render: (props: { className?: stri
 
 const PALETTE = ['#7A8B5C', '#3D4A2A', '#C77D7D', '#E8A5A5', '#4A3F35', '#BFB29E', '#000000'];
 
-const id = () => Math.random().toString(36).slice(2, 10);
-
 export function StickersPanel() {
   const stickers = useResume((s) => s.data.customization.stickers);
   const addSticker = useResume((s) => s.addSticker);
@@ -39,7 +38,7 @@ export function StickersPanel() {
 
   const placeSticker = (kind: StickerKind) => {
     addSticker({
-      id: id(),
+      id: uid(),
       kind,
       x: 80,
       y: 12,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -18,18 +18,19 @@ const DISMISSED_KEY = 'easycv-install-dismissed';
 export function PWARegister() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [hidden, setHidden] = useState(false);
+  const swCheckedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const isDev = process.env.NODE_ENV !== 'production';
 
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && !swCheckedRef.current) {
+      swCheckedRef.current = true;
       if (isDev) {
-        // Dev builds change chunk hashes on every recompile. A stale SW
-        // serves the old HTML, which then 404s on chunks that no longer
-        // exist and the page hangs on the Suspense fallback. Strip any
-        // SW that an earlier session installed.
+        // Dev chunk hashes change on every recompile; a stale SW serves old
+        // HTML that 404s on chunks that no longer exist. Strip any SW left
+        // over from an earlier session.
         navigator.serviceWorker.getRegistrations().then((regs) => {
           for (const r of regs) r.unregister().catch(() => {});
         }).catch(() => {});

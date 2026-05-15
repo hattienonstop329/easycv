@@ -11,10 +11,9 @@ import { MD } from '@/lib/markdown';
 import { Dots, SkillTokens } from '../SkillTokens';
 import { fontVar } from '@/lib/design-tokens';
 
-// Resolve a section's typography overrides into CSS variables that children
-// can consume (--sec-title-size, --sec-body-size, --sec-line-height, --sec-item-gap)
-// plus margin tweaks for the wrapping <section>. Font and color overrides
-// rebind --font-head/--font-body/--accent/--heading/--text scoped to the section.
+// Translates a section's typography overrides into scoped CSS variables that
+// child elements consume. Font/color overrides rebind the global vars
+// (--font-head, --accent, etc.) within the section's subtree only.
 export function sectionStyle(
   typography: ResumeData['customization']['typography'] | undefined,
   type: SectionType,

@@ -10,6 +10,7 @@ import {
   LanguageItem,
   AwardItem,
 } from '../types';
+import { uid as id } from '../uid';
 
 // JSON Resume schema (https://jsonresume.org/schema/) — partial, the fields we use.
 export interface JsonResume {
@@ -54,7 +55,6 @@ export interface JsonResume {
   awards?: { title?: string; awarder?: string; date?: string; summary?: string }[];
 }
 
-const id = () => Math.random().toString(36).slice(2, 10);
 
 export function toJsonResume(data: ResumeData): JsonResume {
   return {

@@ -11,8 +11,7 @@ import {
   SectionTypographyMap,
 } from '@/lib/types';
 
-// Stable empty fallback — using {} inline inside a Zustand selector triggers
-// infinite re-renders because every call returns a new reference.
+// Module-level constant so the Zustand selector returns a stable reference.
 const EMPTY_TYPOGRAPHY: SectionTypographyMap = {};
 
 const BULLET_SYMBOLS: { id: BulletSymbol; label: string }[] = [
@@ -24,14 +23,6 @@ const BULLET_SYMBOLS: { id: BulletSymbol; label: string }[] = [
   { id: 'none', label: 'none' },
 ];
 
-/**
- * Inline per-section formatting controls. Drops into a section panel and
- * exposes the same overrides as the Typography panel (size / spacing / line
- * height / bullet) plus per-section font and color overrides.
- *
- * Renders only the controls that apply to the section type — bullets only
- * for experience, etc.
- */
 export function SectionFormatDisclosure({
   sectionType,
   supportsBullets = false,
