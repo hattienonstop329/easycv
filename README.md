@@ -149,3 +149,13 @@ npm run lint     # eslint
 ## Privacy
 
 Nothing leaves your browser. No accounts. No tracking. The share link encodes the resume into the URL hash (which never hits a server). If you delete your browser data, the resume is gone — export an `easycv.json` backup if you want to keep it.
+
+---
+
+## Contributing
+
+PRs and issues welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, code style, and what kinds of changes are easiest to land. Templates and color palettes are particularly friendly first contributions.
+
+## License
+
+[MIT](./LICENSE) — do what you want, no warranty, keep the copyright notice.

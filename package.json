@@ -2,6 +2,29 @@
   "name": "easycv",
   "version": "0.1.0",
   "private": true,
+  "description": "A local-first resume and cover-letter builder. 12 templates, full customization, PDF/PNG/JSON export, drag-and-drop. No accounts, no servers — everything stays in your browser.",
+  "license": "MIT",
+  "keywords": [
+    "resume",
+    "resume-builder",
+    "cv",
+    "cv-builder",
+    "cover-letter",
+    "json-resume",
+    "ats",
+    "nextjs",
+    "tailwind",
+    "local-first",
+    "no-signup"
+  ],
+  "homepage": "https://github.com/thsanki/easycv#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thsanki/easycv.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thsanki/easycv/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
