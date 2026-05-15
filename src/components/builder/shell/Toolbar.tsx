@@ -7,6 +7,7 @@ import { Heart } from '@/components/landing/Doodles';
 import { ResumeData } from '@/lib/types';
 import { encodeResumeToHash, makeShareUrl } from '@/lib/share';
 import {
+  exportPreviewToPdf,
   exportPreviewToPng,
   fromJsonResume,
   toJsonResume,
@@ -20,7 +21,9 @@ import { ModeToggle } from './ModeToggle';
 import { SavedTimestamp } from './SavedTimestamp';
 import { SnapshotsMenu } from './SnapshotsMenu';
 import { DailyPromptChip } from './DailyPromptChip';
-import type { DocumentMode } from './PanelSwitcher';
+import { CompletenessBadge } from './CompletenessBadge';
+import { useOpenAIDialog } from '@/lib/ui-store';
+import type { DocumentMode, PanelId } from './PanelSwitcher';
 
 function downloadBlob(content: BlobPart, mime: string, filename: string) {
   const blob = new Blob([content], { type: mime });
@@ -39,14 +42,20 @@ function safeFilename(name: string | undefined, fallback: string): string {
 export function Toolbar({
   mode = 'resume',
   setMode,
+  setPanel,
 }: {
   mode?: DocumentMode;
   setMode?: (m: DocumentMode) => void;
+  setPanel?: (p: PanelId) => void;
 }) {
   const data = useResume((s) => s.data);
   const reset = useResume((s) => s.reset);
   const clear = useResume((s) => s.clear);
   const loadResume = useResume((s) => s.loadResume);
+  const versions = useResume((s) => s.versions);
+  const activeVersionId = useResume((s) => s.activeId);
+  const activeVersionName = versions.find((v) => v.id === activeVersionId)?.name ?? 'My Resume';
+  const openAIDialog = useOpenAIDialog();
   const isLetter = mode === 'letter';
   const [moreOpen, setMoreOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -73,22 +82,16 @@ export function Toolbar({
     isLetter ? 'cover_letter' : 'resume',
   ) + (isLetter ? '_letter' : '');
 
-  const printPdf = () => {
+  const printPdf = async () => {
     if (typeof window === 'undefined') return;
-    const size = data.customization.format === 'A4' ? 'A4' : 'letter';
-    const styleEl = document.createElement('style');
-    styleEl.id = 'easycv-print-size';
-    styleEl.textContent = `@page { size: ${size}; margin: 0; }`;
-    document.head.appendChild(styleEl);
-    const originalTitle = document.title;
-    const docKind = isLetter ? 'Cover Letter' : 'Resume';
-    document.title = `${data.profile.fullName?.trim() || docKind} — ${docKind}`;
-    const cleanup = () => {
-      styleEl.remove();
-      document.title = originalTitle;
-    };
-    window.addEventListener('afterprint', cleanup, { once: true });
-    window.print();
+    flashToast('rendering pdf…');
+    try {
+      await exportPreviewToPdf(`${baseName}.pdf`, data.customization.format);
+      flashToast('pdf saved ✦');
+    } catch (err) {
+      console.error(err);
+      flashToast('pdf export failed — try again');
+    }
   };
 
   const exportEasycvJson = () => {
@@ -117,15 +120,45 @@ export function Toolbar({
   const importFile = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = () => {
+    input.accept = 'application/json,application/pdf,.json,.pdf';
+    input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+      // PDF branch — heuristic resume parser
+      if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+        flashToast('reading pdf…');
+        try {
+          const { extractTextFromPdf } = await import('@/lib/pdf-import');
+          const { parseResumeText, mergeParsedResume } = await import('@/lib/pdf-parse');
+          const { lines } = await extractTextFromPdf(file);
+          const report = parseResumeText(lines);
+          loadResume(mergeParsedResume(data, report.data));
+          const bits: string[] = [];
+          if (report.found.profile.length) bits.push(`profile (${report.found.profile.length})`);
+          if (report.found.experience) bits.push(`${report.found.experience} jobs`);
+          if (report.found.education) bits.push(`${report.found.education} edu`);
+          if (report.found.skills) bits.push(`${report.found.skills} skill groups`);
+          if (report.found.projects) bits.push(`${report.found.projects} projects`);
+          if (report.found.certifications) bits.push(`${report.found.certifications} certs`);
+          if (report.found.awards) bits.push(`${report.found.awards} awards`);
+          if (report.found.languages) bits.push(`${report.found.languages} langs`);
+          if (report.found.custom) bits.push(`${report.found.custom} custom`);
+          flashToast(`pdf imported · ${bits.join(' · ') || 'minimal data'}`);
+          if (report.warnings.length) {
+            // eslint-disable-next-line no-console
+            console.info('PDF import warnings:', report.warnings);
+          }
+        } catch (err) {
+          console.error(err);
+          flashToast('pdf import failed — try the JSON exports instead');
+        }
+        return;
+      }
+      // JSON branch — easycv or JSON Resume
       const reader = new FileReader();
       reader.onload = () => {
         try {
           const raw = JSON.parse(String(reader.result));
-          // Detect: easycv format has `template` + `customization`, JSON Resume has `basics`.
           if (raw && typeof raw === 'object' && 'template' in raw && 'customization' in raw) {
             loadResume(raw as ResumeData);
             flashToast('easycv resume imported ✦');
@@ -156,7 +189,8 @@ export function Toolbar({
   };
 
   return (
-    <div className="no-print h-14 md:h-16 border-b border-cocoa/15 bg-paper/90 backdrop-blur sticky top-0 z-30 px-2.5 md:px-6 flex items-center justify-between gap-1.5 md:gap-2 relative">
+    <div className="no-print h-14 md:h-16 border-b border-cocoa/15 bg-paper/90 backdrop-blur sticky top-0 z-30 px-2.5 md:px-6 flex items-center gap-1.5 md:gap-3 relative">
+      {/* LEFT — logo + undo/redo */}
       <div className="flex items-center gap-1.5 md:gap-3 shrink-0 min-w-0">
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
           <span className="font-[family-name:var(--font-hand)] text-xl md:text-2xl text-olive font-bold">
@@ -164,41 +198,39 @@ export function Toolbar({
           </span>
           <Heart className="w-3 h-3 wobble hidden sm:block" />
         </Link>
-        <div className="hidden sm:block">
-          <UndoRedo />
-        </div>
+        <UndoRedo />
       </div>
 
+      {/* CENTER — mode toggle gets its own flex slot so it can never overlap the right group.
+          Meta line (saved · template · format) sits underneath when there's any room. */}
       {setMode && (
-        <>
-          {/* Desktop: centered absolute */}
-          <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
-            <ModeToggle mode={mode} setMode={setMode} />
+        <div className="flex-1 flex flex-col items-center min-w-0">
+          <ModeToggle mode={mode} setMode={setMode} />
+          <div className="hidden md:flex items-center gap-1.5 text-[10px] text-cocoa-soft truncate mt-0.5 max-w-full">
+            <SavedTimestamp />
+            <span className="text-cocoa/30">·</span>
+            <span className="truncate">{isLetter ? data.letter.template : data.template}</span>
+            <span className="text-cocoa/30">·</span>
+            <span>{data.customization.format}</span>
+          </div>
+          <div className="hidden lg:block">
             <DailyPromptChip />
           </div>
-          {/* Mobile: inline so it doesn't collide with the right-side actions */}
-          <div className="md:hidden">
-            <ModeToggle mode={mode} setMode={setMode} />
-          </div>
-        </>
+        </div>
       )}
 
-      <div className="hidden 2xl:flex items-center gap-3 text-xs text-cocoa-soft truncate">
-        <SavedTimestamp />
-        <span>·</span>
-        <span>{isLetter ? data.letter.template : data.template}</span>
-        <span>·</span>
-        <span>{data.customization.format}</span>
-      </div>
-
       <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
+        {!isLetter && (
+          <CompletenessBadge setPanel={setPanel} />
+        )}
+
         <div className="hidden md:block">
           <VersionPicker />
         </div>
 
         <button
           onClick={copyShareLink}
-          className="hidden md:inline-flex text-xs text-cocoa-soft hover:text-olive-ink px-3 py-1.5 rounded-full border border-cocoa/15 hover:bg-cream2 items-center gap-1"
+          className="hidden lg:inline-flex text-xs text-cocoa-soft hover:text-olive-ink px-3 py-1.5 rounded-full border border-cocoa/15 hover:bg-cream2 items-center gap-1"
           title="copy a private link to this resume"
         >
           ↗ share
@@ -206,10 +238,18 @@ export function Toolbar({
 
         <button
           onClick={importFile}
-          className="hidden md:inline-flex text-xs text-cocoa-soft hover:text-olive-ink px-2 py-1.5 rounded-full hover:bg-cream2"
-          title="import easycv or JSON Resume file"
+          className="hidden lg:inline-flex text-xs text-cocoa-soft hover:text-olive-ink px-2 py-1.5 rounded-full hover:bg-cream2"
+          title="import a PDF resume, easycv backup, or JSON Resume file"
         >
           ↑ import
+        </button>
+
+        <button
+          onClick={openAIDialog}
+          className="hidden lg:inline-flex text-xs text-cocoa-soft hover:text-strawberry-deep px-2 py-1.5 rounded-full hover:bg-cream2"
+          title="connect an Anthropic API key for AI rewrites"
+        >
+          ✨ ai
         </button>
 
         <div className="hidden md:block">
@@ -225,9 +265,14 @@ export function Toolbar({
             ⋯
           </button>
           {moreOpen && (
-            <div className="absolute right-0 top-full mt-1 bg-paper border border-cocoa/15 rounded-xl shadow-lg z-40 min-w-[200px] py-1">
+            <div className="absolute right-0 top-full mt-1 bg-paper border border-cocoa/15 rounded-xl shadow-lg z-40 min-w-[220px] py-1">
+              <div className="px-3 py-2 border-b border-cocoa/10">
+                <div className="text-[10px] uppercase tracking-widest text-cocoa-soft">version</div>
+                <div className="text-sm text-olive-ink truncate">{activeVersionName}</div>
+              </div>
               <MenuItem onClick={() => { copyShareLink(); setMoreOpen(false); }}>↗ copy share link</MenuItem>
-              <MenuItem onClick={() => { importFile(); setMoreOpen(false); }}>↑ import file</MenuItem>
+              <MenuItem onClick={() => { importFile(); setMoreOpen(false); }}>↑ import file (pdf, json)</MenuItem>
+              <MenuItem onClick={() => { openAIDialog(); setMoreOpen(false); }}>✨ ai settings</MenuItem>
               <MenuDivider />
               <MenuLabel>export as</MenuLabel>
               <MenuItem onClick={() => { printPdf(); setMoreOpen(false); }}>· pdf</MenuItem>
@@ -242,7 +287,7 @@ export function Toolbar({
           )}
         </div>
 
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           <button onClick={clear} className="text-xs text-cocoa-soft hover:text-strawberry-deep px-2 py-1.5">
             clear
           </button>

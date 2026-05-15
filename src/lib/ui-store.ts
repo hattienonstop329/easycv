@@ -2,6 +2,11 @@
 
 import { create } from 'zustand';
 
+export interface NavRequest {
+  mode?: 'resume' | 'letter';
+  panel?: string; // PanelId — string here to keep ui-store free of cyclic imports
+}
+
 // Transient UI state that should NOT be persisted (no localStorage).
 // Used for things like "after click-to-edit, scroll-and-focus this specific field."
 interface UIStore {
@@ -18,6 +23,17 @@ interface UIStore {
   tourOpen: boolean;
   openTour: () => void;
   closeTour: () => void;
+
+  // One-shot navigation requests from anywhere → consumed by the Shell.
+  navRequest: NavRequest | null;
+  requestNav: (n: NavRequest) => void;
+  clearNavRequest: () => void;
+
+  // AI settings dialog — opened from the toolbar, the polish panel, or any
+  // bullet's "AI rewrite" affordance when no key is set.
+  aiDialogOpen: boolean;
+  openAIDialog: () => void;
+  closeAIDialog: () => void;
 }
 
 export const useUI = create<UIStore>((set) => ({
@@ -27,4 +43,16 @@ export const useUI = create<UIStore>((set) => ({
   tourOpen: false,
   openTour: () => set({ tourOpen: true }),
   closeTour: () => set({ tourOpen: false }),
+  navRequest: null,
+  requestNav: (n) => set({ navRequest: n }),
+  clearNavRequest: () => set({ navRequest: null }),
+  aiDialogOpen: false,
+  openAIDialog: () => set({ aiDialogOpen: true }),
+  closeAIDialog: () => set({ aiDialogOpen: false }),
 }));
+
+// Stable hooks for the AI dialog — each selects a primitive so Zustand only
+// re-renders consumers when the relevant slice changes.
+export const useAIDialogOpen = () => useUI((s) => s.aiDialogOpen);
+export const useOpenAIDialog = () => useUI((s) => s.openAIDialog);
+export const useCloseAIDialog = () => useUI((s) => s.closeAIDialog);

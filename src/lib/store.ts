@@ -59,6 +59,11 @@ interface ResumeStore {
   setTemplate: (t: TemplateId) => void;
   applyThemePreset: (themeId: string) => void;
   updateCustomization: (patch: Partial<Customization>) => void;
+  /** Patch the typography map for one section type. Pass undefined to clear. */
+  updateSectionTypography: (
+    sectionType: import('./types').SectionType,
+    patch: Partial<import('./types').SectionTypography> | null,
+  ) => void;
   setPhoto: (dataUrl: string | undefined) => void;
 
   addSticker: (sticker: import('./types').Sticker) => void;
@@ -73,7 +78,7 @@ interface ResumeStore {
   reorderSections: (sections: Section[]) => void;
   toggleSection: (sid: string) => void;
   renameSection: (sid: string, title: string) => void;
-  addCustomSection: (title?: string) => void;
+  addCustomSection: (title?: string, body?: string) => void;
   removeSection: (sid: string) => void;
   updateCustomSectionBody: (sid: string, body: string) => void;
 
@@ -178,7 +183,27 @@ export const useResume = create<ResumeStore>()(
         },
         clear: () => {
           pushSnapshot('before clear', get().data);
-          set({ data: empty() });
+          // Preserve the user's template, design customization (colors, fonts,
+          // per-section format overrides, paper texture, stickers, etc.), and
+          // section list — only wipe the *content*. Custom sections lose their
+          // body but the section entries stay so the layout doesn't snap back.
+          set((s) => {
+            const blank = empty();
+            const emptiedCustomSections: Record<string, { id: string; body: string }> = {};
+            for (const sec of s.data.sections) {
+              if (sec.type === 'custom') emptiedCustomSections[sec.id] = { id: sec.id, body: '' };
+            }
+            return {
+              data: {
+                ...blank,
+                template: s.data.template,
+                customization: s.data.customization,
+                sections: s.data.sections,
+                customSections: emptiedCustomSections,
+                letter: s.data.letter,
+              },
+            };
+          });
         },
         loadResume: (next) => {
           pushSnapshot('before resume import', get().data);
@@ -282,6 +307,31 @@ export const useResume = create<ResumeStore>()(
             data: { ...s.data, customization: { ...s.data.customization, ...patch } },
           })),
 
+        updateSectionTypography: (sectionType, patch) =>
+          set((s) => {
+            const current = s.data.customization.typography ?? {};
+            let next: typeof current;
+            if (patch === null) {
+              // Clear this section's overrides entirely.
+              next = { ...current };
+              delete next[sectionType];
+            } else {
+              const existing = current[sectionType] ?? {};
+              const merged = { ...existing, ...patch };
+              // Strip undefined fields so the saved shape stays small.
+              for (const k of Object.keys(merged) as Array<keyof typeof merged>) {
+                if (merged[k] === undefined) delete merged[k];
+              }
+              next = { ...current, [sectionType]: merged };
+            }
+            return {
+              data: {
+                ...s.data,
+                customization: { ...s.data.customization, typography: next },
+              },
+            };
+          }),
+
         setPhoto: (dataUrl) =>
           set((s) => ({
             data: {
@@ -362,14 +412,14 @@ export const useResume = create<ResumeStore>()(
             },
           })),
 
-        addCustomSection: (title = 'Custom') =>
+        addCustomSection: (title = 'Custom', body = '') =>
           set((s) => {
             const newId = `s-custom-${id()}`;
             return {
               data: {
                 ...s.data,
                 sections: [...s.data.sections, { id: newId, type: 'custom', title, visible: true }],
-                customSections: { ...s.data.customSections, [newId]: { id: newId, body: '' } },
+                customSections: { ...s.data.customSections, [newId]: { id: newId, body } },
               },
             };
           }),
@@ -555,7 +605,7 @@ export const useResume = create<ResumeStore>()(
     ),
     {
       name: 'easycv-resume',
-      version: 6,
+      version: 7,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         data: state.data,
@@ -600,6 +650,10 @@ export const useResume = create<ResumeStore>()(
                   : { name: it.name, level: it.level as 1 | 2 | 3 | 4 | 5 | undefined },
             ),
           }));
+        }
+        if (version < 7 && s.data?.customization && !s.data.customization.typography) {
+          // Per-section typography map — start empty, all sections fall back to template defaults.
+          s.data.customization.typography = {};
         }
         return s;
       },

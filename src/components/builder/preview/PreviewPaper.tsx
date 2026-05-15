@@ -7,6 +7,8 @@ import { LetterPreview } from '@/components/templates/letter';
 import { StickerLayer } from '@/components/templates/StickerLayer';
 import { PAGE_SIZES } from '@/lib/design-tokens';
 import { PaperTexture } from '@/lib/types';
+import { usePreviewMetrics } from '@/lib/preview-metrics-store';
+import { FitToPageButton } from '../controls/FitToPageButton';
 
 const TEXTURE_CLASS: Record<PaperTexture, string> = {
   plain: '',
@@ -24,15 +26,21 @@ export function PreviewPaper({ scale = 1, mode = 'resume' }: { scale?: number; m
   const size = PAGE_SIZES[data.customization.format];
   const ref = useRef<HTMLDivElement>(null);
   const [actualHeight, setActualHeight] = useState(0);
+  const setMetrics = usePreviewMetrics((s) => s.setMetrics);
 
   useEffect(() => {
     if (!ref.current) return;
     const ro = new ResizeObserver(([entry]) => {
-      setActualHeight(entry.contentRect.height);
+      const h = entry.contentRect.height;
+      setActualHeight(h);
+      // Publish for the auto-fit feature + any other readers.
+      if (mode === 'resume') {
+        setMetrics({ contentHeightPx: h, pageHeightPx: size.heightPx });
+      }
     });
     ro.observe(ref.current);
     return () => ro.disconnect();
-  }, []);
+  }, [setMetrics, mode, size.heightPx]);
 
   const overflowing = actualHeight > size.heightPx + 4;
   const pages = Math.ceil(actualHeight / size.heightPx) || 1;
@@ -55,13 +63,12 @@ export function PreviewPaper({ scale = 1, mode = 'resume' }: { scale?: number; m
           <PageBreakLine key={i} pageIndex={i + 1} pageHeightPx={size.heightPx} />
         ))}
 
-        {overflowing && (
-          <div className="absolute -top-2 right-2 -translate-y-full no-print">
-            <div className="bg-strawberry-deep text-paper text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
-              <span>spilling to page {pages}</span>
-              <span className="opacity-70">·</span>
-              <span className="opacity-90">try Compact density</span>
+        {overflowing && mode === 'resume' && (
+          <div className="absolute -top-2 right-2 -translate-y-full no-print flex items-center gap-2">
+            <div className="bg-strawberry-deep text-paper text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+              spilling to page {pages}
             </div>
+            <FitToPageButton variant="chip" />
           </div>
         )}
       </div>

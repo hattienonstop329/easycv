@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useResume } from '@/lib/store';
+import { useUI } from '@/lib/ui-store';
 import { TemplateId } from '@/lib/types';
 import {
   AwardsEditor,
   CertificationsEditor,
   DesignPanel,
+  DiffPanel,
+  TypographyPanel,
   EducationPanel,
   ExperiencePanel,
   LanguagesEditor,
@@ -36,6 +39,10 @@ import { ShortcutsOverlay } from './ShortcutsOverlay';
 import { OnboardingTour } from './OnboardingTour';
 import { ToastStack } from './ToastStack';
 import { MilestoneWatcher } from './MilestoneWatcher';
+import { CommandPalette } from './CommandPalette';
+import { AIKeyDialog } from './AIKeyDialog';
+import { PWARegister } from './PWARegister';
+import { useAIDialogOpen, useCloseAIDialog } from '@/lib/ui-store';
 
 const MODE_KEY = 'easycv-doc-mode';
 
@@ -71,6 +78,23 @@ export function Shell({ initialTemplate }: { initialTemplate?: TemplateId }) {
     if (!allowed.has(panel)) setPanel(DEFAULT_PANEL_FOR[next]);
   };
 
+  // Honor cross-panel navigation requests posted to the UI store.
+  const navRequest = useUI((s) => s.navRequest);
+  const clearNavRequest = useUI((s) => s.clearNavRequest);
+  useEffect(() => {
+    if (!navRequest) return;
+    const target = navRequest.mode ?? mode;
+    if (target !== mode) setMode(target);
+    if (navRequest.panel) {
+      const allowed = new Set(panelsFor(target).map((p) => p.id));
+      if (allowed.has(navRequest.panel as PanelId)) {
+        setPanel(navRequest.panel as PanelId);
+      }
+    }
+    clearNavRequest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navRequest]);
+
   if (!hydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center text-cocoa-soft font-[family-name:var(--font-hand)] text-2xl">
@@ -81,7 +105,7 @@ export function Shell({ initialTemplate }: { initialTemplate?: TemplateId }) {
 
   return (
     <div className="min-h-screen flex flex-col paper-bg">
-      <Toolbar mode={mode} setMode={setMode} />
+      <Toolbar mode={mode} setMode={setMode} setPanel={setPanel} />
 
       <div className="flex-1 lg:grid lg:grid-cols-[minmax(420px,_42%)_1fr] no-print">
         <div
@@ -93,6 +117,7 @@ export function Shell({ initialTemplate }: { initialTemplate?: TemplateId }) {
           <div className="flex-1 overflow-y-auto thin-scroll p-4 md:p-6 pb-24 lg:pb-6">
             {panel === 'templates' && <TemplatesPanel mode={mode} />}
             {panel === 'design' && <DesignPanel />}
+            {panel === 'typography' && <TypographyPanel />}
             {panel === 'sections' && <SectionsPanel />}
             {panel === 'profile' && <ProfilePanel />}
             {panel === 'experience' && <ExperiencePanel />}
@@ -102,6 +127,7 @@ export function Shell({ initialTemplate }: { initialTemplate?: TemplateId }) {
             {panel === 'letter' && <LetterPanel />}
             {panel === 'matchjd' && <MatchJDPanel />}
             {panel === 'polish' && <PolishPanel />}
+            {panel === 'diff' && <DiffPanel />}
             {panel === 'stickers' && <StickersPanel />}
             {panel === 'languages' && <LanguagesEditor />}
             {panel === 'awards' && <AwardsEditor />}
@@ -131,6 +157,15 @@ export function Shell({ initialTemplate }: { initialTemplate?: TemplateId }) {
       <ShortcutsOverlay />
       <ToastStack />
       <MilestoneWatcher />
+      <CommandPalette mode={mode} setMode={setMode} setPanel={setPanel} />
+      <AIDialogMount />
+      <PWARegister />
     </div>
   );
+}
+
+function AIDialogMount() {
+  const open = useAIDialogOpen();
+  const close = useCloseAIDialog();
+  return <AIKeyDialog open={open} onClose={close} />;
 }

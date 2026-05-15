@@ -6,3 +6,4 @@ export { MonthInput } from './MonthInput';
 export { EmptyState } from './EmptyState';
 export { useFocusOnTarget, focusInsideRef } from './useFocusOnTarget';
 export { ResetSectionLink } from './ResetSectionLink';
+export { SectionFormatDisclosure } from './SectionFormatDisclosure';

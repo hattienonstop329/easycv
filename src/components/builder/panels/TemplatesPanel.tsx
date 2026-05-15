@@ -7,6 +7,7 @@ import { LetterTemplateId, TemplateCategory, TemplateId } from '@/lib/types';
 import { ResumePreview } from '@/components/templates';
 import { LETTER_TEMPLATES, LetterPreview } from '@/components/templates/letter';
 import type { DocumentMode } from '../shell/PanelSwitcher';
+import { CompareTemplatesModal } from './CompareTemplatesModal';
 
 export function TemplatesPanel({ mode = 'resume' }: { mode?: DocumentMode }) {
   return mode === 'letter' ? <LetterTemplates /> : <ResumeTemplates />;
@@ -16,6 +17,7 @@ function ResumeTemplates() {
   const data = useResume((s) => s.data);
   const setTemplate = useResume((s) => s.setTemplate);
   const [filter, setFilter] = useState<'all' | TemplateCategory>('all');
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const list = TEMPLATE_REGISTRY.filter((t) => filter === 'all' || t.category === filter);
 
@@ -25,21 +27,31 @@ function ResumeTemplates() {
         switch templates any time — your data follows you between layouts.
       </div>
 
-      <div className="flex gap-1 mb-4">
-        {(['all', 'professional', 'creative'] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs transition ${
-              filter === f
-                ? 'bg-olive-ink text-paper'
-                : 'text-cocoa-soft hover:text-olive-ink hover:bg-cream2'
-            }`}
-          >
-            {f}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex gap-1">
+          {(['all', 'professional', 'creative'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-full text-xs transition ${
+                filter === f
+                  ? 'bg-olive-ink text-paper'
+                  : 'text-cocoa-soft hover:text-olive-ink hover:bg-cream2'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setCompareOpen(true)}
+          className="text-xs px-3 py-1.5 rounded-full border border-cocoa/15 text-cocoa-soft hover:text-olive-ink hover:bg-cream2 transition flex items-center gap-1"
+          title="see two templates side-by-side with your data"
+        >
+          <span>⇋</span> compare
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -58,7 +70,13 @@ function ResumeTemplates() {
               <div className="p-2.5 border-t border-cocoa/10">
                 <div className="flex items-center justify-between gap-1">
                   <div className="text-sm font-medium text-olive-ink">{t.name}</div>
-                  {isActive && <span className="text-[10px] text-matcha-deep">✓ active</span>}
+                  {isActive ? (
+                    <span className="text-[10px] text-matcha-deep">✓ active</span>
+                  ) : t.showsPhoto ? (
+                    <span className="text-[10px] text-cocoa-soft" title="this template renders the uploaded photo">
+                      ◐ photo
+                    </span>
+                  ) : null}
                 </div>
                 <div className="text-[10px] text-cocoa-soft mt-0.5 leading-tight">{t.tag}</div>
               </div>
@@ -66,6 +84,8 @@ function ResumeTemplates() {
           );
         })}
       </div>
+
+      <CompareTemplatesModal open={compareOpen} onClose={() => setCompareOpen(false)} />
     </div>
   );
 }

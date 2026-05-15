@@ -1,14 +1,23 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useResume } from '@/lib/store';
 import { LetterTemplateId } from '@/lib/types';
 import { LETTER_TEMPLATES } from '@/components/templates/letter';
 import { FieldRow, Input, Textarea } from '../controls/Field';
+import { lintResume, readingLevel, wordCount } from '@/lib/writing-checks';
 
 export function LetterPanel() {
-  const letter = useResume((s) => s.data.letter);
+  const data = useResume((s) => s.data);
+  const letter = data.letter;
   const update = useResume((s) => s.updateLetter);
   const setTpl = useResume((s) => s.setLetterTemplate);
+  const letterIssues = useMemo(
+    () => lintResume(data).filter((i) => i.location.panel === 'letter'),
+    [data],
+  );
+  const reading = useMemo(() => readingLevel(letter.body), [letter.body]);
+  const bodyWords = wordCount(letter.body);
 
   return (
     <div className="space-y-6">
@@ -97,9 +106,45 @@ export function LetterPanel() {
               placeholder="Three or four short paragraphs. Lead with the role and the why. Tell one specific story about your impact. Close with what you'd love to do next."
               className="min-h-[220px]"
             />
-            <div className="text-[10px] text-cocoa-soft mt-1">
-              supports **bold**, *italic*, and [links](https://example.com). leave a blank line between paragraphs.
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-cocoa-soft mt-1">
+              <span>supports **bold**, *italic*, and [links](https://example.com).</span>
+              {bodyWords > 0 && <span>{bodyWords} words</span>}
+              {reading && (
+                <span>
+                  · grade {reading.grade.toFixed(1)} ·{' '}
+                  <span
+                    className={
+                      reading.tone === 'easy'
+                        ? 'text-matcha-deep'
+                        : reading.tone === 'hard'
+                          ? 'text-strawberry-deep'
+                          : 'text-cocoa-soft'
+                    }
+                  >
+                    {reading.label}
+                  </span>
+                </span>
+              )}
             </div>
+            {letterIssues.length > 0 && (
+              <div className="mt-2 bg-strawberry/10 border border-strawberry/25 rounded-xl p-2.5 text-xs">
+                <div className="text-[10px] uppercase tracking-widest text-strawberry-deep mb-1">
+                  polish — {letterIssues.length} suggestion{letterIssues.length === 1 ? '' : 's'}
+                </div>
+                <ul className="space-y-0.5">
+                  {letterIssues.slice(0, 4).map((i, idx) => (
+                    <li key={idx} className="text-cocoa">
+                      <span className="text-strawberry-deep">·</span> {i.message}
+                    </li>
+                  ))}
+                  {letterIssues.length > 4 && (
+                    <li className="text-cocoa-soft italic">
+                      + {letterIssues.length - 4} more in the polish panel
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
           </FieldRow>
           <div className="grid grid-cols-2 gap-3">
             <FieldRow label="closing">

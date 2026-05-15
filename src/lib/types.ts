@@ -54,6 +54,36 @@ export interface Sticker {
   color: string;
 }
 
+export type BulletSymbol = '•' | '–' | '→' | '✦' | '·' | 'none';
+
+/** Per-section-type typography overrides. All fields optional — undefined = use template default. */
+export interface SectionTypography {
+  /** Multiplier on the section heading size. 0.7 – 1.5. */
+  titleSize?: number;
+  /** Multiplier on the section body text. 0.7 – 1.4. */
+  bodySize?: number;
+  /** Extra space (px) added before the section. */
+  sectionGapTop?: number;
+  /** Extra space (px) between items inside this section. */
+  itemGap?: number;
+  /** Multiplier on line height for body text in this section. 1.0 – 2.0. */
+  lineHeight?: number;
+  /** Symbol used for bullets in this section. */
+  bulletSymbol?: BulletSymbol;
+  /** Font used for the section heading. */
+  fontHead?: FontKey;
+  /** Font used for the section body text. */
+  fontBody?: FontKey;
+  /** Override accent color (used for section title + bullet markers). */
+  accent?: string;
+  /** Override heading color (used for item titles within the section). */
+  heading?: string;
+  /** Override body text color within the section. */
+  text?: string;
+}
+
+export type SectionTypographyMap = Partial<Record<SectionType, SectionTypography>>;
+
 export interface Customization {
   accent: string;
   heading: string;
@@ -70,6 +100,20 @@ export interface Customization {
   photo?: string;
   paperTexture: PaperTexture;
   stickers: Sticker[];
+  /** Per-section-type typography overrides. */
+  typography?: SectionTypographyMap;
+}
+
+/** Per-item layout overrides — applied to an individual job, project, etc. */
+export interface ItemOverrides {
+  /** Multiplier on this item's font size. 0.7 – 1.5. */
+  fontSize?: number;
+  /** Extra space (px) added before this item. */
+  spaceBefore?: number;
+  /** When true, force a print page break before this item. */
+  pageBreakBefore?: boolean;
+  /** When true, ask the renderer to keep this item on a single page. */
+  keepTogether?: boolean;
 }
 
 export type SectionType =
@@ -102,6 +146,7 @@ export interface ExperienceItem {
   end: string;
   current: boolean;
   bullets: string[];
+  overrides?: ItemOverrides;
 }
 
 export interface EducationItem {
@@ -112,6 +157,7 @@ export interface EducationItem {
   start: string;
   end: string;
   notes: string;
+  overrides?: ItemOverrides;
 }
 
 export interface ProjectItem {
@@ -120,6 +166,7 @@ export interface ProjectItem {
   link: string;
   description: string;
   tech: string[];
+  overrides?: ItemOverrides;
 }
 
 export interface SkillItem {
@@ -164,6 +211,7 @@ export interface AwardItem {
   issuer: string;
   date: string;
   description: string;
+  overrides?: ItemOverrides;
 }
 
 export interface Section {

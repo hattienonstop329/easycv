@@ -2,12 +2,15 @@
 
 import { useResume } from '@/lib/store';
 import { FieldRow, Input, Textarea } from '../controls/Field';
+import { PanelHints } from '../controls/PanelHints';
+import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
 
 export function ProfilePanel() {
   const profile = useResume((s) => s.data.profile);
   const updateProfile = useResume((s) => s.updateProfile);
   return (
     <div className="space-y-3">
+      <PanelHints panel="profile" />
       <FieldRow label="full name">
         <Input
           value={profile.fullName}
@@ -62,6 +65,10 @@ export function ProfilePanel() {
           placeholder="A short note in your voice — two or three sentences."
         />
       </FieldRow>
+      <SectionFormatDisclosure
+        sectionType="summary"
+        label="format the summary section"
+      />
     </div>
   );
 }

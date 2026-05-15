@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useUI } from '@/lib/ui-store';
 
 const SHORTCUTS: ReadonlyArray<{ keys: string; label: string }> = [
+  { keys: '⌘ K', label: 'command palette — jump to anything' },
   { keys: '⌘ Z', label: 'undo' },
   { keys: '⌘ ⇧ Z', label: 'redo' },
   { keys: '?', label: 'open this overlay' },

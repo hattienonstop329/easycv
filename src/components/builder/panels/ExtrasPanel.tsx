@@ -3,6 +3,8 @@
 import { useResume } from '@/lib/store';
 import { AddButton, FieldRow, Input, ItemCard, Textarea } from '../controls/Field';
 import { EmptyState } from '../controls/EmptyState';
+import { ItemAdvanced } from '../controls/ItemAdvanced';
+import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
 
 export function CertificationsEditor() {
   const items = useResume((s) => s.data.certifications);
@@ -39,6 +41,7 @@ export function CertificationsEditor() {
         </ItemCard>
       ))}
       <AddButton onClick={add} label="add certification" />
+      <SectionFormatDisclosure sectionType="certifications" />
     </div>
   );
 }
@@ -75,6 +78,7 @@ export function LanguagesEditor() {
         </ItemCard>
       ))}
       <AddButton onClick={add} label="add language" />
+      <SectionFormatDisclosure sectionType="languages" />
     </div>
   );
 }
@@ -114,9 +118,14 @@ export function AwardsEditor() {
           <FieldRow label="description">
             <Textarea value={a.description} onChange={(e) => update(a.id, { description: e.target.value })} />
           </FieldRow>
+          <ItemAdvanced
+            value={a.overrides}
+            onChange={(o) => update(a.id, { overrides: o })}
+          />
         </ItemCard>
       ))}
       <AddButton onClick={add} label="add award" />
+      <SectionFormatDisclosure sectionType="awards" />
     </div>
   );
 }

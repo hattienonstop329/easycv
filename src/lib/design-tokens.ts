@@ -173,12 +173,14 @@ export interface TemplateMeta {
   recommendedTheme?: string;
   recommendedFontHead?: FontKey;
   recommendedFontBody?: FontKey;
+  /** Whether the template renders the uploaded photo. Most don't. */
+  showsPhoto?: boolean;
 }
 
 export const TEMPLATE_REGISTRY: ReadonlyArray<TemplateMeta> = [
   // Professional
   { id: 'onyx', name: 'Onyx', category: 'professional', tag: 'minimal · single-column · ATS-safe', recommendedFontHead: 'inter', recommendedFontBody: 'inter' },
-  { id: 'cascade', name: 'Cascade', category: 'professional', tag: 'left sidebar · two-column · technical', recommendedFontHead: 'rubik', recommendedFontBody: 'inter' },
+  { id: 'cascade', name: 'Cascade', category: 'professional', tag: 'left sidebar · two-column · technical', recommendedFontHead: 'rubik', recommendedFontBody: 'inter', showsPhoto: true },
   { id: 'bronzor', name: 'Bronzor', category: 'professional', tag: 'classic serif · traditional', recommendedFontHead: 'lora', recommendedFontBody: 'lora' },
   { id: 'enfold', name: 'Enfold', category: 'professional', tag: 'right sidebar · clean', recommendedFontHead: 'inter', recommendedFontBody: 'inter' },
   { id: 'cubic', name: 'Cubic', category: 'professional', tag: 'bold header band · modern', recommendedFontHead: 'rubik', recommendedFontBody: 'inter' },

@@ -30,7 +30,7 @@ export function MonoLetter({ data }: { data: ResumeData }) {
               marginTop: 2,
             }}
           >
-            // {sender.title}
+            {'// '}{sender.title}
           </div>
         )}
         <div

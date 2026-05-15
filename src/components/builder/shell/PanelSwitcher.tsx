@@ -3,6 +3,7 @@
 export type PanelId =
   | 'templates'
   | 'design'
+  | 'typography'
   | 'sections'
   | 'profile'
   | 'experience'
@@ -14,6 +15,7 @@ export type PanelId =
   | 'certifications'
   | 'matchjd'
   | 'polish'
+  | 'diff'
   | 'stickers'
   | 'letter';
 
@@ -28,6 +30,7 @@ interface PanelDef {
 export const RESUME_PANELS: ReadonlyArray<PanelDef> = [
   { id: 'templates', label: 'templates', icon: '▤' },
   { id: 'design', label: 'design', icon: '◎' },
+  { id: 'typography', label: 'typography', icon: 'Aa' },
   { id: 'stickers', label: 'stickers', icon: '✦' },
   { id: 'sections', label: 'sections', icon: '☰' },
   { id: 'profile', label: 'profile', icon: '◐' },
@@ -37,6 +40,7 @@ export const RESUME_PANELS: ReadonlyArray<PanelDef> = [
   { id: 'skills', label: 'skills', icon: '◇' },
   { id: 'polish', label: 'polish', icon: '✧' },
   { id: 'matchjd', label: 'match jd', icon: '◎' },
+  { id: 'diff', label: 'diff versions', icon: '⇋' },
   { id: 'languages', label: 'languages', icon: 'A' },
   { id: 'certifications', label: 'certifications', icon: '✓' },
   { id: 'awards', label: 'awards', icon: '★' },

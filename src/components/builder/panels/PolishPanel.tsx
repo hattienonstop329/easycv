@@ -1,8 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useResume } from '@/lib/store';
-import { lintResume, lintScore, WritingIssue } from '@/lib/writing-checks';
+import { lintResume, lintScore, readingLevel, WritingIssue } from '@/lib/writing-checks';
+import { useAIKey } from '@/lib/ai-store';
+import { useOpenAIDialog } from '@/lib/ui-store';
+import { useToasts } from '@/lib/toast-store';
+import { rewriteSummary } from '@/lib/ai';
 
 const KIND_COLOR: Record<WritingIssue['kind'], string> = {
   'weak-verb': 'bg-strawberry/15 border-strawberry/30 text-cocoa',
@@ -11,6 +15,7 @@ const KIND_COLOR: Record<WritingIssue['kind'], string> = {
   'starts-with-i': 'bg-cream2 border-cocoa/15 text-cocoa',
   'no-quantification': 'bg-cream2 border-cocoa/15 text-cocoa',
   'first-person': 'bg-cream2 border-cocoa/15 text-cocoa',
+  'tense-mix': 'bg-strawberry/15 border-strawberry/30 text-cocoa',
 };
 
 const KIND_LABEL: Record<WritingIssue['kind'], string> = {
@@ -20,12 +25,50 @@ const KIND_LABEL: Record<WritingIssue['kind'], string> = {
   'starts-with-i': 'first person',
   'no-quantification': 'add numbers',
   'first-person': 'first person',
+  'tense-mix': 'mixed tense',
 };
 
 export function PolishPanel() {
   const data = useResume((s) => s.data);
+  const updateProfile = useResume((s) => s.updateProfile);
+  const apiKey = useAIKey((s) => s.apiKey);
+  const openAIDialog = useOpenAIDialog();
+  const push = useToasts((s) => s.push);
+  const [aiRunning, setAiRunning] = useState(false);
   const issues = useMemo(() => lintResume(data), [data]);
   const score = lintScore(issues);
+
+  const aiSummary = async () => {
+    if (!apiKey) {
+      openAIDialog();
+      return;
+    }
+    if (!data.profile.summary.trim()) {
+      push('write a draft summary first — ai sharpens what you have');
+      return;
+    }
+    setAiRunning(true);
+    try {
+      const next = await rewriteSummary(data.profile.summary, data.profile.title);
+      updateProfile({ summary: next });
+      push('summary rewritten with ai ✦', { tone: 'praise' });
+    } catch (err) {
+      push(err instanceof Error ? `ai rewrite failed: ${err.message}` : 'ai rewrite failed');
+    } finally {
+      setAiRunning(false);
+    }
+  };
+  const reading = useMemo(() => {
+    const corpus = [
+      data.profile.summary,
+      ...data.experience.flatMap((e) => e.bullets),
+      ...data.projects.map((p) => p.description),
+      ...data.awards.map((a) => a.description),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    return readingLevel(corpus);
+  }, [data]);
 
   const grouped: Record<WritingIssue['location']['panel'], WritingIssue[]> = {
     profile: [],
@@ -33,6 +76,7 @@ export function PolishPanel() {
     projects: [],
     awards: [],
     education: [],
+    letter: [],
   };
   for (const i of issues) grouped[i.location.panel].push(i);
 
@@ -75,6 +119,67 @@ export function PolishPanel() {
             </div>
           </div>
         </div>
+
+        {reading && (
+          <div className="mt-4 pt-3 border-t border-cocoa/10 flex items-center gap-3">
+            <div>
+              <div className="font-[family-name:var(--font-serif)] text-2xl text-olive-ink leading-none">
+                grade {reading.grade.toFixed(1)}
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-cocoa-soft mt-1">
+                reading level
+              </div>
+            </div>
+            <div className="flex-1">
+              <div
+                className={`text-xs italic ${
+                  reading.tone === 'easy'
+                    ? 'text-matcha-deep'
+                    : reading.tone === 'mid'
+                      ? 'text-cocoa-soft'
+                      : 'text-strawberry-deep'
+                }`}
+              >
+                {reading.label}
+              </div>
+              <div className="text-[10px] text-cocoa-soft mt-0.5">
+                {reading.words} words · {reading.sentences} sentence{reading.sentences === 1 ? '' : 's'}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-paper border border-cocoa/15 rounded-2xl p-4 mb-5">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-cocoa-soft">ai rewrite</div>
+            <div className="text-sm text-olive-ink mt-0.5">
+              {apiKey ? 'rewrite the summary or any bullet using claude.' : 'add an api key to enable real rewrites.'}
+            </div>
+          </div>
+          {apiKey ? (
+            <button
+              type="button"
+              onClick={aiSummary}
+              disabled={aiRunning}
+              className="bg-strawberry-deep text-paper text-xs px-3 py-1.5 rounded-full font-medium hover:bg-strawberry transition disabled:opacity-60 whitespace-nowrap"
+            >
+              {aiRunning ? 'rewriting…' : '✨ rewrite summary'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={openAIDialog}
+              className="bg-olive-ink text-paper text-xs px-3 py-1.5 rounded-full font-medium hover:bg-olive transition whitespace-nowrap"
+            >
+              add api key
+            </button>
+          )}
+        </div>
+        <div className="text-[10px] text-cocoa-soft mt-2 italic">
+          your key stays in this browser. only the bullet text is sent to anthropic.
+        </div>
       </div>
 
       {issues.length === 0 && (
@@ -83,7 +188,7 @@ export function PolishPanel() {
         </div>
       )}
 
-      {(['profile', 'experience', 'projects', 'awards'] as const).map((panel) => {
+      {(['profile', 'experience', 'projects', 'awards', 'letter'] as const).map((panel) => {
         const list = grouped[panel];
         if (list.length === 0) return null;
         return (

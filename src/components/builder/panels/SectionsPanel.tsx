@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useResume } from '@/lib/store';
 import { SortableList, SortableItem, DragHandle } from '../controls/Sortable';
 import { Section } from '@/lib/types';
+import { SECTION_PRESETS } from '@/lib/section-presets';
 
 export function SectionsPanel() {
   const sections = useResume((s) => s.data.sections);
@@ -13,6 +15,7 @@ export function SectionsPanel() {
   const remove = useResume((s) => s.removeSection);
   const addCustom = useResume((s) => s.addCustomSection);
   const updateBody = useResume((s) => s.updateCustomSectionBody);
+  const [presetsOpen, setPresetsOpen] = useState(false);
 
   return (
     <div>
@@ -78,13 +81,53 @@ export function SectionsPanel() {
         )}
       </SortableList>
 
-      <button
-        type="button"
-        onClick={() => addCustom('Custom')}
-        className="w-full mt-4 border-2 border-dashed border-cocoa/25 rounded-xl py-3 text-sm text-cocoa-soft hover:border-matcha hover:text-matcha-deep hover:bg-matcha/5 transition font-[family-name:var(--font-hand)] text-lg"
-      >
-        + add custom section
-      </button>
+      <div className="mt-4">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => addCustom('Custom')}
+            className="border-2 border-dashed border-cocoa/25 rounded-xl py-2.5 text-sm text-cocoa-soft hover:border-matcha hover:text-matcha-deep hover:bg-matcha/5 transition font-[family-name:var(--font-hand)] text-lg"
+          >
+            + blank
+          </button>
+          <button
+            type="button"
+            onClick={() => setPresetsOpen((o) => !o)}
+            className={`border-2 border-dashed rounded-xl py-2.5 text-sm transition font-[family-name:var(--font-hand)] text-lg ${
+              presetsOpen
+                ? 'border-strawberry-deep text-strawberry-deep bg-strawberry/5'
+                : 'border-cocoa/25 text-cocoa-soft hover:border-strawberry-deep hover:text-strawberry-deep hover:bg-strawberry/5'
+            }`}
+          >
+            {presetsOpen ? '× hide presets' : '✦ from preset'}
+          </button>
+        </div>
+
+        {presetsOpen && (
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {SECTION_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  addCustom(p.title, p.body);
+                  setPresetsOpen(false);
+                }}
+                className="text-left bg-paper border border-cocoa/15 rounded-xl p-3 hover:border-strawberry-deep hover:shadow-sm hover:-translate-y-0.5 transition group"
+              >
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-strawberry-deep">{p.icon}</span>
+                  <div className="text-sm font-medium text-olive-ink">{p.title}</div>
+                </div>
+                <div className="text-[11px] text-cocoa-soft italic mt-0.5">{p.hint}</div>
+                <div className="text-[10px] text-cocoa-soft mt-1.5 line-clamp-2 leading-snug opacity-70 group-hover:opacity-100">
+                  {p.body.replace(/\*\*/g, '').slice(0, 90)}…
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

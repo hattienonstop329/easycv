@@ -24,6 +24,14 @@ export function decodeResumeFromHash(hash: string): ResumeData | null {
 }
 
 export function makeShareUrl(hash: string): string {
+  // Path-based viewer (/r/[hash]) so the page can render server-side and
+  // produce real OG/Twitter previews when pasted into Slack, X, etc.
+  if (typeof window === 'undefined') return `/r/${hash}`;
+  return `${window.location.origin}/r/${hash}`;
+}
+
+// Legacy /share#hash URL — kept so old links keep working.
+export function makeLegacyShareUrl(hash: string): string {
   if (typeof window === 'undefined') return `/share#${hash}`;
   return `${window.location.origin}/share#${hash}`;
 }

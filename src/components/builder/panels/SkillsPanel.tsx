@@ -8,6 +8,8 @@ import { SortableList, SortableItem, DragHandle } from '../controls/Sortable';
 import { EmptyState } from '../controls/EmptyState';
 import { ResetSectionLink } from '../controls/ResetSectionLink';
 import { focusInsideRef, useFocusOnTarget } from '../controls/useFocusOnTarget';
+import { PanelHints } from '../controls/PanelHints';
+import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
 
 export function SkillsPanel() {
   const items = useResume((s) => s.data.skills);
@@ -34,6 +36,7 @@ export function SkillsPanel() {
 
   return (
     <div>
+      <PanelHints panel="skills" />
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="text-xs text-cocoa-soft leading-relaxed">
           proficiency dots are optional — leave them empty to show the skill name only.
@@ -66,6 +69,7 @@ export function SkillsPanel() {
         )}
       </SortableList>
       <AddButton onClick={add} label="add a skill group" />
+      <SectionFormatDisclosure sectionType="skills" />
     </div>
   );
 }

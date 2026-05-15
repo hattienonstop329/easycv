@@ -3,6 +3,11 @@ import { Fragment, ReactNode } from 'react';
 // Tiny inline markdown: **bold**, *italic*, `code`, [text](url).
 // We deliberately avoid block features (no headings, no code blocks, no lists)
 // to keep behavior predictable inside resume templates.
+//
+// Layout directives (resume-specific):
+//   [br]              — forced line break (sugar for \n)
+//   [indent]...       — render line with extra left padding
+//   [keep]...[/keep]  — wrap content in a no-page-break span (print only)
 
 interface Token {
   kind: 'text' | 'bold' | 'italic' | 'code' | 'link';
@@ -122,16 +127,53 @@ function renderTokens(tokens: Token[], keyPrefix = ''): ReactNode {
 
 export function MD({ children }: { children: string | undefined | null }) {
   if (!children) return null;
-  // Preserve newlines so multi-line summaries / bullets render correctly.
-  const lines = children.split('\n');
+  // Layout directives — preprocess before line splitting.
+  const normalized = children.replace(/\[br\]/gi, '\n');
+  const lines = normalized.split('\n');
   return (
     <>
-      {lines.map((line, i) => (
-        <Fragment key={i}>
-          {i > 0 && <br />}
-          {renderTokens(tokenize(line))}
-        </Fragment>
-      ))}
+      {lines.map((line, i) => {
+        const indented = /^\[indent\]/i.test(line);
+        const stripped = indented ? line.replace(/^\[indent\]/i, '') : line;
+        // [keep]...[/keep] wraps a span with no-page-break styling.
+        const segments = splitOnKeep(stripped);
+        const rendered = segments.map((seg, sIdx) =>
+          seg.kind === 'keep' ? (
+            <span
+              key={sIdx}
+              style={{ breakInside: 'avoid', pageBreakInside: 'avoid', display: 'inline-block' }}
+            >
+              {renderTokens(tokenize(seg.text))}
+            </span>
+          ) : (
+            <Fragment key={sIdx}>{renderTokens(tokenize(seg.text))}</Fragment>
+          ),
+        );
+        return (
+          <Fragment key={i}>
+            {i > 0 && <br />}
+            {indented ? (
+              <span style={{ display: 'inline-block', paddingLeft: 16 }}>{rendered}</span>
+            ) : (
+              rendered
+            )}
+          </Fragment>
+        );
+      })}
     </>
   );
+}
+
+function splitOnKeep(text: string): { kind: 'plain' | 'keep'; text: string }[] {
+  const out: { kind: 'plain' | 'keep'; text: string }[] = [];
+  const re = /\[keep\]([\s\S]*?)\[\/keep\]/gi;
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastIndex) out.push({ kind: 'plain', text: text.slice(lastIndex, m.index) });
+    out.push({ kind: 'keep', text: m[1] });
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < text.length) out.push({ kind: 'plain', text: text.slice(lastIndex) });
+  return out;
 }

@@ -1,25 +1,37 @@
 'use client';
 
-import { ChangeEvent, useRef } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import { useResume } from '@/lib/store';
-import { COLOR_THEMES, FONTS, DENSITY_SCALES } from '@/lib/design-tokens';
+import { COLOR_THEMES, FONTS, DENSITY_SCALES, TEMPLATE_REGISTRY, getTemplateMeta } from '@/lib/design-tokens';
 import { Density, FontKey, PageFormat, PaperTexture } from '@/lib/types';
 import { ColorChip } from '../controls/ColorChip';
 import { Segmented } from '../controls/Segmented';
+import { FitToPageButton } from '../controls/FitToPageButton';
+import { PhotoEditModal } from './PhotoEditModal';
 
 export function DesignPanel() {
   const c = useResume((s) => s.data.customization);
+  const templateId = useResume((s) => s.data.template);
   const apply = useResume((s) => s.applyThemePreset);
   const update = useResume((s) => s.updateCustomization);
+  const setTemplate = useResume((s) => s.setTemplate);
   const setPhoto = useResume((s) => s.setPhoto);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [editorSource, setEditorSource] = useState<string | null>(null);
+  const meta = getTemplateMeta(templateId);
+  const photoSupportingTemplate = TEMPLATE_REGISTRY.find((t) => t.showsPhoto);
 
   const onPhoto = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setPhoto(typeof reader.result === 'string' ? reader.result : undefined);
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : null;
+      if (result) setEditorSource(result);
+    };
     reader.readAsDataURL(file);
+    // Reset the input so picking the same file twice still triggers onChange.
+    e.target.value = '';
   };
 
   return (
@@ -77,6 +89,9 @@ export function DesignPanel() {
           onChange={(v) => update({ density: v as Density })}
           options={Object.values(DENSITY_SCALES).map((d) => ({ value: d.key, label: d.name }))}
         />
+        <div className="mt-2">
+          <FitToPageButton />
+        </div>
       </Block>
 
       <Block title="page format">
@@ -130,16 +145,25 @@ export function DesignPanel() {
               onClick={() => fileRef.current?.click()}
               className="text-xs px-3 py-1.5 rounded-full bg-paper border border-cocoa/15 hover:bg-cream2 text-olive-ink"
             >
-              upload
+              {c.photo ? 'replace' : 'upload'}
             </button>
             {c.photo && (
-              <button
-                type="button"
-                onClick={() => setPhoto(undefined)}
-                className="text-xs text-cocoa-soft hover:text-strawberry-deep"
-              >
-                remove
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setEditorSource(c.photo!)}
+                  className="text-xs text-cocoa-soft hover:text-olive-ink"
+                >
+                  crop / filter
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhoto(undefined)}
+                  className="text-xs text-cocoa-soft hover:text-strawberry-deep"
+                >
+                  remove
+                </button>
+              </>
             )}
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} className="hidden" />
@@ -153,7 +177,29 @@ export function DesignPanel() {
           />
           show photo on resume
         </label>
+        {c.photo && c.showPhoto && !meta.showsPhoto && photoSupportingTemplate && (
+          <div className="mt-3 bg-strawberry/10 border border-strawberry/30 rounded-xl p-3 text-xs text-cocoa">
+            heads up — <span className="font-medium text-olive-ink">{meta.name}</span> doesn&apos;t render
+            uploaded photos. only sidebar templates do.{' '}
+            <button
+              type="button"
+              onClick={() => setTemplate(photoSupportingTemplate.id)}
+              className="text-strawberry-deep underline underline-offset-2 hover:text-strawberry"
+            >
+              switch to {photoSupportingTemplate.name} →
+            </button>
+          </div>
+        )}
       </Block>
+
+      {editorSource && (
+        <PhotoEditModal
+          source={editorSource}
+          open={true}
+          onClose={() => setEditorSource(null)}
+          onSave={(dataUrl) => setPhoto(dataUrl)}
+        />
+      )}
     </div>
   );
 }

@@ -8,6 +8,9 @@ import { MonthInput } from '../controls/MonthInput';
 import { EmptyState } from '../controls/EmptyState';
 import { ResetSectionLink } from '../controls/ResetSectionLink';
 import { focusInsideRef, useFocusOnTarget } from '../controls/useFocusOnTarget';
+import { PanelHints } from '../controls/PanelHints';
+import { ItemAdvanced } from '../controls/ItemAdvanced';
+import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
 
 export function EducationPanel() {
   const items = useResume((s) => s.data.education);
@@ -35,6 +38,7 @@ export function EducationPanel() {
 
   return (
     <div>
+      <PanelHints panel="education" />
       <div className="flex justify-end mb-2">
         <ResetSectionLink section="education" label="education entries" />
       </div>
@@ -97,6 +101,10 @@ export function EducationPanel() {
                       placeholder="Honors, thesis, anything you'd write on a postcard."
                     />
                   </FieldRow>
+                  <ItemAdvanced
+                    value={item.overrides}
+                    onChange={(o) => update(item.id, { overrides: o })}
+                  />
                 </ItemCard>
               </div>
             )}
@@ -104,6 +112,7 @@ export function EducationPanel() {
         )}
       </SortableList>
       <AddButton onClick={add} label="add education" />
+      <SectionFormatDisclosure sectionType="education" />
     </div>
   );
 }

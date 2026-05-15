@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { useResume } from '@/lib/store';
+import { useUI } from '@/lib/ui-store';
+import { useToasts } from '@/lib/toast-store';
 import { findMatchedTerms, flattenResumeText, KbEntry } from '@/lib/skills-kb';
+import { draftLetterFromJD } from '@/lib/letter-from-jd';
 
 const STORAGE_KEY = 'easycv-jd-draft';
 
@@ -12,6 +15,9 @@ export function MatchJDPanel() {
   const addSkillGroup = useResume((s) => s.addSkillGroup);
   const addSkillToGroup = useResume((s) => s.addSkillToGroup);
   const updateSkillGroup = useResume((s) => s.updateSkillGroup);
+  const updateLetter = useResume((s) => s.updateLetter);
+  const requestNav = useUI((s) => s.requestNav);
+  const pushToast = useToasts((s) => s.push);
 
   const [jd, setJd] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
@@ -42,6 +48,21 @@ export function MatchJDPanel() {
   }, [jd, data]);
 
   const matchPct = jdTerms.length === 0 ? 0 : Math.round((matched.length / jdTerms.length) * 100);
+
+  const draftLetter = () => {
+    if (!jd.trim()) {
+      pushToast('paste a JD first');
+      return;
+    }
+    const { letter, detected } = draftLetterFromJD(jd, data);
+    updateLetter(letter);
+    requestNav({ mode: 'letter', panel: 'letter' });
+    const detail =
+      detected.role || detected.company
+        ? `${detected.role ?? 'role'}${detected.company ? ` at ${detected.company}` : ''}`
+        : 'a starter draft';
+    pushToast(`drafted: ${detail}`, { tone: 'praise' });
+  };
 
   const addToSkills = (entry: KbEntry) => {
     // Find or create a skill group whose category roughly matches the entry's category.
@@ -107,6 +128,19 @@ export function MatchJDPanel() {
               className="h-full bg-matcha-deep transition-[width] duration-500"
               style={{ width: `${matchPct}%` }}
             />
+          </div>
+
+          <button
+            type="button"
+            onClick={draftLetter}
+            className="mt-4 w-full bg-olive-ink text-paper rounded-full px-4 py-2.5 text-sm font-medium hover:bg-olive transition flex items-center justify-center gap-2"
+            title="generate a starter cover letter from this JD + your resume"
+          >
+            <span>✦</span>
+            draft a cover letter from this JD
+          </button>
+          <div className="text-[11px] text-cocoa-soft mt-1.5 italic text-center">
+            pulls in the role, company, and your top matched skills — edit the rest in the letter panel.
           </div>
 
           {missing.length > 0 && (

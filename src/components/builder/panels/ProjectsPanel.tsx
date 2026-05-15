@@ -7,6 +7,9 @@ import { SortableList, SortableItem, DragHandle } from '../controls/Sortable';
 import { EmptyState } from '../controls/EmptyState';
 import { ResetSectionLink } from '../controls/ResetSectionLink';
 import { focusInsideRef, useFocusOnTarget } from '../controls/useFocusOnTarget';
+import { PanelHints } from '../controls/PanelHints';
+import { ItemAdvanced } from '../controls/ItemAdvanced';
+import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
 
 export function ProjectsPanel() {
   const items = useResume((s) => s.data.projects);
@@ -33,6 +36,7 @@ export function ProjectsPanel() {
 
   return (
     <div>
+      <PanelHints panel="projects" />
       <div className="flex justify-end mb-2">
         <ResetSectionLink section="projects" label="projects" />
       </div>
@@ -82,6 +86,10 @@ export function ProjectsPanel() {
                     placeholder="Substack, Procreate"
                   />
                 </FieldRow>
+                <ItemAdvanced
+                  value={item.overrides}
+                  onChange={(o) => update(item.id, { overrides: o })}
+                />
               </ItemCard>
               </div>
             )}
@@ -89,6 +97,7 @@ export function ProjectsPanel() {
         )}
       </SortableList>
       <AddButton onClick={add} label="add a project" />
+      <SectionFormatDisclosure sectionType="projects" />
     </div>
   );
 }

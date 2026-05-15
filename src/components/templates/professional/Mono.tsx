@@ -29,7 +29,7 @@ export function Mono({ data }: TemplateProps) {
         </h1>
         {data.profile.title && (
           <div style={{ color: 'var(--muted)', marginTop: 2, fontFamily: 'var(--font-head)' }}>
-            // {data.profile.title}
+            {'// '}{data.profile.title}
           </div>
         )}
         <div style={{ marginTop: 10, color: 'var(--text)', fontFamily: 'var(--font-head)', fontSize: '0.85em' }}>
