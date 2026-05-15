@@ -11,9 +11,9 @@ export function Nav() {
         <Heart className="w-4 h-4 wobble" />
       </Link>
       <div className="hidden md:flex items-center gap-8 font-[family-name:var(--font-hand)] text-xl text-cocoa">
-        <a href="#templates" className="hover:text-matcha-deep transition">templates</a>
-        <a href="#how" className="hover:text-matcha-deep transition">how it works</a>
-        <a href="#why" className="hover:text-matcha-deep transition">why?</a>
+        <Link href="/features" className="hover:text-matcha-deep transition">features</Link>
+        <Link href="/templates" className="hover:text-matcha-deep transition">templates</Link>
+        <Link href="/#how" className="hover:text-matcha-deep transition">how it works</Link>
       </div>
       <Link
         href="/builder"

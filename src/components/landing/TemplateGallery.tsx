@@ -26,9 +26,22 @@ const TAPES = [
 const FAVE_RESUME: TemplateId = 'onyx';
 const FAVE_LETTER: LetterTemplateId = 'marquee-letter';
 
+// How many cards we preview on the home page. The full set lives on /templates.
+const HOME_PRO_COUNT = 3;
+const HOME_CREATIVE_COUNT = 3;
+const HOME_LETTER_COUNT = 2;
+
 export function TemplateGallery() {
-  const professional = TEMPLATE_REGISTRY.filter((t) => t.category === 'professional');
-  const creative = TEMPLATE_REGISTRY.filter((t) => t.category === 'creative');
+  const professional = TEMPLATE_REGISTRY
+    .filter((t) => t.category === 'professional')
+    .slice(0, HOME_PRO_COUNT);
+  const creative = TEMPLATE_REGISTRY
+    .filter((t) => t.category === 'creative')
+    .slice(0, HOME_CREATIVE_COUNT);
+  const letters = LETTER_TEMPLATES.slice(0, HOME_LETTER_COUNT);
+
+  const totalResumes = TEMPLATE_REGISTRY.length;
+  const totalLetters = LETTER_TEMPLATES.length;
 
   return (
     <section
@@ -42,14 +55,14 @@ export function TemplateGallery() {
       <div className="max-w-6xl mx-auto relative">
         <header className="text-center mb-16 relative">
           <span className="font-[family-name:var(--font-hand)] text-2xl text-strawberry-deep rotate-1 inline-block">
-            seventeen flavours ✦
+            a taste of the gallery ✦
           </span>
           <h2 className="font-[family-name:var(--font-serif)] text-5xl md:text-6xl text-olive-ink mt-3 font-light">
             pick your paper.
           </h2>
           <p className="mt-4 text-cocoa-soft max-w-xl mx-auto">
-            real previews, not mockups. twelve resumes, five matching cover letters —
-            switch any time, your data follows you.
+            a quick peek — {totalResumes} resume looks and {totalLetters} matching cover letters
+            live in the full gallery. switch any time, your data follows you.
           </p>
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 hidden md:block">
             <Arrow className="w-16 h-12 rotate-90" color="#7A8B5C" />
@@ -58,7 +71,7 @@ export function TemplateGallery() {
 
         <Subheader
           eyebrow="for the recruiter"
-          title="seven professional resumes"
+          title="professional"
           sub="ATS-safe layouts that recruiters expect — minimal, executive, sidebar, technical."
         />
         <Grid>
@@ -76,7 +89,7 @@ export function TemplateGallery() {
 
         <Subheader
           eyebrow="for the personality"
-          title="five creative resumes"
+          title="creative"
           sub="for designers, writers, and anyone who scribbles in the margins."
           spacingClass="mt-20"
         />
@@ -87,39 +100,42 @@ export function TemplateGallery() {
               id={t.id}
               name={t.name}
               tag={t.tag}
-              styleIndex={i + 7}
+              styleIndex={i + HOME_PRO_COUNT}
             />
           ))}
         </Grid>
 
         <Subheader
           eyebrow="the application package"
-          title="five cover letters"
-          sub="each letter pairs with a resume look — same colors, same fonts, one cohesive set."
+          title="cover letters"
+          sub="each letter pairs with a resume — same colors, same fonts."
           spacingClass="mt-20"
         />
         <Grid>
-          {LETTER_TEMPLATES.map((t, i) => (
+          {letters.map((t, i) => (
             <LetterCard
               key={t.id}
               id={t.id as LetterTemplateId}
               name={t.name.replace(' Letter', '')}
               tag={t.tag}
-              styleIndex={i + 12}
+              styleIndex={i + HOME_PRO_COUNT + HOME_CREATIVE_COUNT}
               badge={t.id === FAVE_LETTER ? '★ pairs with Marquee' : undefined}
             />
           ))}
           <BlankCard />
         </Grid>
 
-        <div className="mt-20 text-center">
+        <div className="mt-20 text-center space-y-3">
           <Link
-            href="/builder"
+            href="/templates"
             className="inline-flex items-center gap-2 bg-olive-ink text-paper px-8 py-4 rounded-full text-lg font-medium hover:bg-olive transition scribble-shadow"
           >
-            start with any of them
+            see all {totalResumes + totalLetters} templates
             <span>→</span>
           </Link>
+          <div className="text-xs text-cocoa-soft">
+            previews are real, not mockups — every card renders the actual template.
+          </div>
         </div>
       </div>
     </section>
