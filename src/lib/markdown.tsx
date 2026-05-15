@@ -16,6 +16,13 @@ interface Token {
   children?: Token[];
 }
 
+// Resume data round-trips through share-link URL hashes, so a hostile resume
+// could embed `[text](javascript:…)`. React doesn't strip those, so we gate
+// hrefs to a small allowlist of safe schemes before rendering as <a>.
+const SAFE_HREF = /^(https?:|mailto:|tel:|\/|\.{1,2}\/|#)/i;
+const isSafeHref = (href: string | undefined): href is string =>
+  typeof href === 'string' && SAFE_HREF.test(href.trim());
+
 function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
@@ -109,7 +116,11 @@ function renderTokens(tokens: Token[], keyPrefix = ''): ReactNode {
             {t.text}
           </code>
         );
-      case 'link':
+      case 'link': {
+        const children = t.children ? renderTokens(t.children, `${key}-`) : t.text;
+        if (!isSafeHref(t.href)) {
+          return <Fragment key={key}>{children}</Fragment>;
+        }
         return (
           <a
             key={key}
@@ -118,9 +129,10 @@ function renderTokens(tokens: Token[], keyPrefix = ''): ReactNode {
             rel="noopener noreferrer"
             style={{ color: 'var(--accent, currentColor)', textDecoration: 'underline' }}
           >
-            {t.children ? renderTokens(t.children, `${key}-`) : t.text}
+            {children}
           </a>
         );
+      }
     }
   });
 }
