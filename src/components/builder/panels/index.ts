@@ -1,0 +1,13 @@
+export { TemplatesPanel } from './TemplatesPanel';
+export { DesignPanel } from './DesignPanel';
+export { MatchJDPanel } from './MatchJDPanel';
+export { PolishPanel } from './PolishPanel';
+export { StickersPanel } from './StickersPanel';
+export { LetterPanel } from './LetterPanel';
+export { SectionsPanel } from './SectionsPanel';
+export { ProfilePanel } from './ProfilePanel';
+export { ExperiencePanel } from './ExperiencePanel';
+export { EducationPanel } from './EducationPanel';
+export { SkillsPanel } from './SkillsPanel';
+export { ProjectsPanel } from './ProjectsPanel';
+export { CertificationsEditor, LanguagesEditor, AwardsEditor } from './ExtrasPanel';

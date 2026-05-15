@@ -1,26 +1,206 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #FBF8F1;
+  --cream: #F6F1E8;
+  --cream2: #EFE7D6;
+  --stone: #D4C9B8;
+  --stone2: #BFB29E;
+  --olive-ink: #2A331C;
+  --olive: #3D4A2A;
+  --cocoa: #4A3F35;
+  --cocoa-soft: #6B5D50;
+  --matcha: #7A8B5C;
+  --matcha-deep: #5D6E42;
+  --strawberry: #E8A5A5;
+  --strawberry-deep: #C77D7D;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-cream: var(--cream);
+  --color-cream2: var(--cream2);
+  --color-stone: var(--stone);
+  --color-stone2: var(--stone2);
+  --color-olive-ink: var(--olive-ink);
+  --color-olive: var(--olive);
+  --color-cocoa: var(--cocoa);
+  --color-cocoa-soft: var(--cocoa-soft);
+  --color-matcha: var(--matcha);
+  --color-matcha-deep: var(--matcha-deep);
+  --color-strawberry: var(--strawberry);
+  --color-strawberry-deep: var(--strawberry-deep);
+  --font-hand: var(--font-caveat);
+  --font-script: var(--font-kalam);
+  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html, body {
+  background: var(--paper);
+  color: var(--cocoa);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.paper-bg {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(rgba(74, 63, 53, 0.06) 1px, transparent 1px),
+    radial-gradient(rgba(74, 63, 53, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px, 11px 11px;
+  background-position: 0 0, 11px 11px;
+}
+
+.notebook-bg {
+  background-color: var(--cream);
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      rgba(122, 139, 92, 0.18) 28px
+    );
+}
+
+.grid-bg {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(74, 63, 53, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 63, 53, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dotted-bg {
+  background-color: var(--paper);
+  background-image: radial-gradient(rgba(74, 63, 53, 0.18) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.squiggle {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 8' preserveAspectRatio='none'><path d='M2,4 Q15,1 30,4 T60,4 T90,4 T118,4' fill='none' stroke='%23C77D7D' stroke-width='2' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 8px;
+  padding-bottom: 6px;
+}
+
+.tape {
+  position: absolute;
+  background: rgba(232, 165, 165, 0.55);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  width: 90px;
+  height: 22px;
+}
+
+.scribble-shadow {
+  box-shadow: 3px 3px 0 var(--olive-ink);
+}
+
+.soft-shadow {
+  box-shadow: 0 8px 24px -10px rgba(42, 51, 28, 0.25);
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+.wobble { animation: wobble 4s ease-in-out infinite; }
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.33%); }
+}
+.animate-marquee { animation: marquee 30s linear infinite; }
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(-5deg); }
+  50% { transform: translateY(-8px) rotate(-3deg); }
+}
+.float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+.draw-line {
+  stroke-dasharray: 1000;
+  animation: draw-line 2s ease-out forwards;
+}
+
+/* Paper texture overlays (rendered as ::before via .paper-texture-* on the page) */
+.paper-tex-cream { background-color: #FBF8F1 !important; }
+.paper-tex-lined {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 27px,
+    rgba(122, 139, 92, 0.18) 28px
+  );
+}
+.paper-tex-grid {
+  background-image:
+    linear-gradient(rgba(74, 63, 53, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 63, 53, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.paper-tex-dotted {
+  background-image: radial-gradient(rgba(74, 63, 53, 0.18) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.paper-tex-coffee {
+  background-image:
+    radial-gradient(circle at 15% 28%, rgba(106, 67, 38, 0.13) 0, rgba(106, 67, 38, 0.06) 60px, transparent 110px),
+    radial-gradient(circle at 82% 70%, rgba(106, 67, 38, 0.10) 0, rgba(106, 67, 38, 0.05) 50px, transparent 100px),
+    radial-gradient(circle at 60% 18%, rgba(106, 67, 38, 0.08) 0, transparent 70px);
+}
+
+/* Thumbnail: render a full A4 template scaled to fit its width,
+   then crop the bottom so the card stays compact. The fade hides the cut. */
+.thumb-shell {
+  container-type: inline-size;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  background: white;
+  overflow: hidden;
+  position: relative;
+}
+.thumb-shell::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 56px;
+  background: linear-gradient(to bottom, transparent, white 90%);
+  pointer-events: none;
+  z-index: 5;
+}
+.thumb-page {
+  width: 794px;
+  height: 1123px;
+  transform-origin: top left;
+  transform: scale(0.36);
+  transform: scale(calc(100cqi / 794px));
+}
+
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: var(--stone); border-radius: 4px; }
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* Kill the browser's default print headers (date/title) and footers (url/page#). */
+@page {
+  margin: 0;
+}
+
+@media print {
+  html, body {
+    background: white;
+    margin: 0;
+    padding: 0;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .no-print { display: none !important; }
+  .print-only-page {
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
+    page-break-after: always;
+  }
 }
