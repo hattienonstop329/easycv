@@ -203,24 +203,4 @@ html, body {
     box-shadow: none !important;
     page-break-after: always;
   }
-  .viewer-page {
-    box-shadow: none !important;
-  }
-}
-
-/* The /r/ public viewer renders at fixed mm dimensions. On small screens we
-   scale it down so it fits without horizontal scroll. */
-@media (max-width: 640px) {
-  .viewer-page {
-    transform: scale(0.45);
-    transform-origin: top center;
-    margin-bottom: -55%;
-  }
-}
-@media (min-width: 641px) and (max-width: 880px) {
-  .viewer-page {
-    transform: scale(0.7);
-    transform-origin: top center;
-    margin-bottom: -22%;
-  }
 }

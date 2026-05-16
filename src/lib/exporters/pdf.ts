@@ -36,10 +36,15 @@ export async function exportPreviewToPdf(
   if (scaler) scaler.style.transform = 'none';
 
   // Wait for all web fonts to actually be available before snapshot,
-  // otherwise html-to-image may capture the system fallback.
+  // otherwise html-to-image may capture the system fallback. Race against a
+  // short timeout so a stuck font load (CDN down, CORS blocked) can't hang
+  // the export indefinitely — we'll fall back to system fonts in that case.
   if ('fonts' in document) {
     try {
-      await (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready;
+      await Promise.race([
+        (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, 4000)),
+      ]);
     } catch {
       /* non-fatal */
     }

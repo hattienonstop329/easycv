@@ -16,6 +16,7 @@ import { ExperienceItem } from '@/lib/types';
 import { PanelHints } from '../controls/PanelHints';
 import { ItemAdvanced } from '../controls/ItemAdvanced';
 import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
+import { uid } from '@/lib/uid';
 
 export function ExperiencePanel() {
   const items = useResume((s) => s.data.experience);
@@ -134,6 +135,22 @@ function BulletList({
   const [aiRunningIdx, setAiRunningIdx] = useState<number | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const bulletRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
+  // Stable per-bullet keys so reorder/delete don't relocate textarea focus.
+  // Kept in lockstep with `item.bullets` via the wrapped mutations below; the
+  // length-change branch below realigns after external mutations (e.g.
+  // cross-job bullet moves) using the "derived state from props" pattern.
+  const [bulletKeys, setBulletKeys] = useState<string[]>(() => item.bullets.map(() => uid()));
+  const [trackedLen, setTrackedLen] = useState(item.bullets.length);
+  if (trackedLen !== item.bullets.length) {
+    setTrackedLen(item.bullets.length);
+    setBulletKeys((prev) => {
+      const next: string[] = [];
+      for (let i = 0; i < item.bullets.length; i++) {
+        next.push(prev[i] ?? uid());
+      }
+      return next;
+    });
+  }
 
   const aiRewrite = async (i: number) => {
     if (!apiKey) {
@@ -205,6 +222,25 @@ function BulletList({
     const [removed] = next.splice(from, 1);
     next.splice(to, 0, removed);
     update(item.id, { bullets: next });
+    setBulletKeys((prev) => {
+      const k = [...prev];
+      const [r] = k.splice(from, 1);
+      k.splice(to, 0, r);
+      return k;
+    });
+  };
+
+  const removeBullet = (i: number) => {
+    const nextBullets = item.bullets.filter((_, idx) => idx !== i);
+    update(item.id, { bullets: nextBullets.length ? nextBullets : [''] });
+    setBulletKeys((prev) =>
+      nextBullets.length ? prev.filter((_, idx) => idx !== i) : [uid()],
+    );
+  };
+
+  const addBullet = () => {
+    update(item.id, { bullets: [...item.bullets, ''] });
+    setBulletKeys((prev) => [...prev, uid()]);
   };
   return (
     <div className="mt-3" ref={cardRef}>
@@ -217,7 +253,7 @@ function BulletList({
           const tone =
             wc === 0 ? 'text-cocoa-soft/50' : wc > 32 ? 'text-strawberry-deep' : wc > 25 ? 'text-stone2' : 'text-cocoa-soft';
           return (
-            <div key={i} className="group">
+            <div key={bulletKeys[i] ?? i} className="group">
               <div className="flex gap-2 items-start">
                 <span className="text-strawberry-deep mt-2">•</span>
                 <Textarea
@@ -285,10 +321,7 @@ function BulletList({
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      const next = item.bullets.filter((_, idx) => idx !== i);
-                      update(item.id, { bullets: next.length ? next : [''] });
-                    }}
+                    onClick={() => removeBullet(i)}
                     className="text-cocoa-soft hover:text-strawberry-deep text-sm leading-none p-0.5"
                     title="remove"
                   >
@@ -307,7 +340,7 @@ function BulletList({
       </div>
       <button
         type="button"
-        onClick={() => update(item.id, { bullets: [...item.bullets, ''] })}
+        onClick={addBullet}
         className="mt-2 text-sm text-matcha-deep font-[family-name:var(--font-hand)] hover:text-olive-ink"
       >
         + add bullet
