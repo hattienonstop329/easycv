@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useResume } from '@/lib/store';
 import { AddButton, FieldRow, Input, ItemCard, Textarea } from '../controls/Field';
 import { SortableList, SortableItem, DragHandle } from '../controls/Sortable';
@@ -73,17 +73,9 @@ export function ProjectsPanel() {
                   />
                 </FieldRow>
                 <FieldRow label="tech / tags (comma-separated)">
-                  <Input
-                    value={item.tech.join(', ')}
-                    onChange={(e) =>
-                      update(item.id, {
-                        tech: e.target.value
-                          .split(',')
-                          .map((s) => s.trim())
-                          .filter(Boolean),
-                      })
-                    }
-                    placeholder="Substack, Procreate"
+                  <TechInput
+                    value={item.tech}
+                    onCommit={(tech) => update(item.id, { tech })}
                   />
                 </FieldRow>
                 <ItemAdvanced
@@ -99,5 +91,33 @@ export function ProjectsPanel() {
       <AddButton onClick={add} label="add a project" />
       <SectionFormatDisclosure sectionType="projects" />
     </div>
+  );
+}
+
+function TechInput({
+  value,
+  onCommit,
+}: {
+  value: string[];
+  onCommit: (tech: string[]) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const displayed = draft ?? value.join(', ');
+
+  return (
+    <Input
+      value={displayed}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        if (draft === null) return;
+        const next = draft
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        onCommit(next);
+        setDraft(null);
+      }}
+      placeholder="Substack, Procreate"
+    />
   );
 }

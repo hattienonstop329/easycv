@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { decodeResumeFromHash } from '@/lib/share';
-import { ResumePreview } from '@/components/templates';
 import { ViewerActions } from './ViewerActions';
+import { ViewerPaper } from './ViewerPaper';
 
 interface PageProps {
   params: Promise<{ hash: string }>;
@@ -91,15 +91,7 @@ export default async function PublicResumePage({ params }: PageProps) {
         <ViewerActions data={data} />
       </header>
 
-      <div className="flex-1 p-4 md:p-10 flex justify-center">
-        <div
-          id="resume-preview"
-          className="bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.35)] rounded-sm origin-top viewer-page"
-          style={{ width: pageWidth, minHeight: pageHeight }}
-        >
-          <ResumePreview data={data} />
-        </div>
-      </div>
+      <ViewerPaper data={data} pageWidth={pageWidth} pageHeight={pageHeight} />
 
       <footer className="no-print border-t border-cocoa/10 bg-paper/60 backdrop-blur px-4 md:px-8 py-4 text-center text-xs text-cocoa-soft">
         made with{' '}

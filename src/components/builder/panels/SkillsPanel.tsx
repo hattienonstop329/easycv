@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useResume } from '@/lib/store';
 import { SkillGroup, SkillItem } from '@/lib/types';
 import { AddButton, FieldRow, Input, ItemCard } from '../controls/Field';
@@ -10,6 +10,7 @@ import { ResetSectionLink } from '../controls/ResetSectionLink';
 import { focusInsideRef, useFocusOnTarget } from '../controls/useFocusOnTarget';
 import { PanelHints } from '../controls/PanelHints';
 import { SectionFormatDisclosure } from '../controls/SectionFormatDisclosure';
+import { uid } from '@/lib/uid';
 
 export function SkillsPanel() {
   const items = useResume((s) => s.data.skills);
@@ -81,14 +82,30 @@ function SkillItems({
   group: SkillGroup;
   onChange: (items: SkillItem[]) => void;
 }) {
+  // SkillItem has no id in the schema, so we maintain parallel client-side
+  // keys to keep input focus/IME state stable across add/remove. The
+  // length-change branch realigns after external mutations.
+  const [keys, setKeys] = useState<string[]>(() => group.items.map(() => uid()));
+  const [trackedLen, setTrackedLen] = useState(group.items.length);
+  if (trackedLen !== group.items.length) {
+    setTrackedLen(group.items.length);
+    setKeys((prev) => {
+      const next: string[] = [];
+      for (let i = 0; i < group.items.length; i++) next.push(prev[i] ?? uid());
+      return next;
+    });
+  }
+
   const setItem = (idx: number, patch: Partial<SkillItem>) => {
     onChange(group.items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   };
   const removeItem = (idx: number) => {
     onChange(group.items.filter((_, i) => i !== idx));
+    setKeys((prev) => prev.filter((_, i) => i !== idx));
   };
   const addItem = () => {
     onChange([...group.items, { name: '' }]);
+    setKeys((prev) => [...prev, uid()]);
   };
 
   return (
@@ -101,7 +118,7 @@ function SkillItems({
           <div className="text-xs text-cocoa-soft/60 italic">no skills yet — add one below.</div>
         )}
         {group.items.map((it, i) => (
-          <div key={i} className="flex items-center gap-2">
+          <div key={keys[i] ?? i} className="flex items-center gap-2">
             <input
               value={it.name}
               onChange={(e) => setItem(i, { name: e.target.value })}
